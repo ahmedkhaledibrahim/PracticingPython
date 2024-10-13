@@ -20,18 +20,8 @@ class Apartment(Property):
     def prompt_init():
         parent_init = Property.prompt_init()
 
-        laundry = ''
-        while laundry.lower() not in Apartment.valid_laundries:
-            laundry = input("What laundry facilities does "
-                            "the property have? ({})".format(
-                ", ".join(Apartment.valid_laundries)))
-        balcony = ''
-        while balcony.lower() not in \
-                Apartment.valid_balconies:
-            balcony = input(
-                "Does the property have a balcony? "
-                "({})".format(
-                    ", ".join(Apartment.valid_balconies)))
+        laundry = get_valid_input("what laundry? ",Apartment.valid_laundries)
+        balcony = get_valid_input("what balcony? ",Apartment.valid_balconies)
         parent_init.update({
             "laundry": laundry,
             "balcony": balcony
@@ -39,5 +29,9 @@ class Apartment(Property):
         return parent_init
 
 
-apartment = Apartment.prompt_init()
-print(apartment)
+def get_valid_input(message_string,valid_options):
+    message_string += "  ({})  ".format(", ".join(valid_options))
+    response = input(message_string)
+    while response not in valid_options:
+        response = input(message_string)
+    return response
