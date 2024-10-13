@@ -57,8 +57,17 @@ def strStr(haystack, needle):
             return i
     return -1
 
-# strStr("hello","ll")
 
-animal1 = Animal("animal",3)
-dog1 = Dog("dog child",2)
-dog1.speak()
+
+def findClosestNumber(nums):
+    i = 0
+    closestIndex = float('inf')
+    while i < len(nums):
+        if abs(nums[i]) - 0 < abs(closestIndex):
+            closestIndex = nums[i]
+        elif abs(nums[i]) - 0 == closestIndex:
+            closestIndex = max(closestIndex,nums[i])
+        i +=1
+    return closestIndex
+
+findClosestNumber([-10000,-10000])

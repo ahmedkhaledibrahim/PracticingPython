@@ -11,3 +11,9 @@ class Dog(Animal):
     def speak(self):
         super().speak()
         print("from child class")
+    
+    def play(self):
+        print("overloading")
+
+    def play(self,play):
+        print("overloading")
