@@ -1,3 +1,6 @@
+from typing import Protocol
+
+
 class Animal:
     def __init__(self,name,age,sound):
         self.name = name
@@ -9,15 +12,12 @@ class Animal:
 
 
 
-class Prey:
-    def __init__(self,name):
-        self.name = name
-
-    def speak(self):
-        print(f"my name is {self.name}")
+class Prey(Protocol):
+    def flee(self):
+        pass
 
 
-class Rabbit(Animal,Prey):
+class Rabbit(Animal):
     def __init__(self,name,age,sound,color):
         super().__init__(name,age,sound)
         self.color = color
@@ -26,8 +26,12 @@ class Rabbit(Animal,Prey):
         super().speak()
         print("I'm Rabbit")
 
+    def flee(self):
+        pass
+
 
 r1 = Rabbit("loony",1,"sdfs","white")
-r1.speak()
+isPrey = r1 is Prey
+print(isPrey)
 
 
