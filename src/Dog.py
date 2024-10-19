@@ -24,7 +24,4 @@ d2 = Dog("dogg3",5)
 d3 = Dog("dogg4",5)
 d4 = Dog("dogg5",5)
 
-for animal in Animal.all_animals:
-    print(animal.name)
-
-d1.speak()
+print(d.__dict__)
