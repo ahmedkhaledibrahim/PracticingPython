@@ -1,6 +1,6 @@
 from http.client import HTTPException
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from uuid import UUID,uuid4
@@ -51,3 +51,9 @@ async def read_task(task_id: UUID):
         if task.id == task_id:
             return task
     raise HTTPException(status_code = 404,detail = "Task Not Found")
+
+@app.get("/get-message",response_model=dict)
+async def getMessage(message:str=Query(max_length=12,min_length=4,description="Enter Message to be printed")):
+    return {
+        "message":message
+    }
