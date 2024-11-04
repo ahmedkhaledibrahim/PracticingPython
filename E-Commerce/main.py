@@ -1,113 +1,46 @@
 from typing import Annotated
-from fastapi import FastAPI,Depends,HTTPException,status
-from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from tortoise.contrib.fastapi import register_tortoise
-from models import *
+from models import User, user_pydantic, user_pydanticIn
 from pydantic import BaseModel
-
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashedsecret",
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
-}
+from authentication import get_hashed_password
+#signals
+from tortoise.signals import post_save
+from typing import List,Optional,Type
+from tortoise import BaseDBAsyncClient
 
 app = FastAPI()
-def fake_hash_password(password: str):
-    return "fakehashed" + password
-# @app.post("/registration",response_model=user_pydanticOut)
-# async def user_registration(user:user_pydanticIn):
-#     user_info = user.dict(exclude_unset=True)
-#     user_info["password"] =
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "token")
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-
-class UserInDB(User):
-    hashed_password: str
-
-
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-
-def fake_decode_token(token):
-    # This doesn't provide any security at all
-    # Check the next version
-    user = get_user(fake_users_db, token)
-    return user
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    user = fake_decode_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return user
-
-
-async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+@post_save(User)
+async def create_business(
+        sender:"Type[User]",
+        instance: User,
+        created:bool,
+        using_db: "Optional[BaseDBAsyncClient]"
 ):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
+    pass
 
 
-@app.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user_dict = fake_users_db.get(form_data.username)
-    if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = UserInDB(**user_dict)
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    return {"access_token": user.username, "token_type": "bearer"}
-
-
-
-@app.get("/users/")
-async def read_users(current_user: Annotated[User, Depends(get_current_active_user)]):
-    return {
-        "token":current_user,
-        "users":[
-            {
-                "id":1,
-                "name":"ahmed"
-            },
-            {
-                "id": 2,
-                "name": "khaled"
-            }
-        ]
-    }
+@app.post("/registration", response_model=user_pydantic)  # Use Pydantic schema here
+async def user_registration(user: user_pydanticIn):
+    user_info = user.dict(exclude_unset=True)
+    user_info["password"] = get_hashed_password(user_info["password"])
+    user_obj = await User.create(**user_info)
+    new_user = await user_pydantic.from_tortoise_orm(user_obj)
+    return new_user
 
 
 @app.get("/")
 def index():
-    return {"Message":"Hello"}
+    return {"Message": "Hello"}
 
-register_tortoise(app,db_url="sqlite://database.sqlite3",modules={"models":["models"]},generate_schemas=True,add_exception_handlers=True)
+
+# Register Tortoise ORM
+register_tortoise(
+    app,
+    db_url="sqlite://database.sqlite3",
+    modules={"models": ["models"]},
+    generate_schemas=True,
+    add_exception_handlers=True
+)
