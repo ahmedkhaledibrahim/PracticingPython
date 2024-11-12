@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from pydantic import BaseModel
+from tortoise.signals import post_save
 from typing_extensions import deprecated
 
 app = FastAPI()
@@ -84,8 +85,8 @@ def create_access_token(data:dict, expires_delta: timedelta | None = None):
 
 
 @app.post("/token")
-async def login_for_access_token(form_data:OAuth2PasswordRequestForm=Depends()):
-    user = authenticate_user(fake_users_db,form_data.username,form_data.password)
+async def login_for_access_token(username:str,password:str):
+    user = authenticate_user(fake_users_db,username,password)
     if not user:
         raise HTTPException(
             status_code= 401,
